@@ -7,19 +7,6 @@ import Loader from '../components/loader';
 import gsap from 'gsap';
 import GainersCard from '../components/ui/GainersCard';
 import LosersCard from '../components/ui/LosersCard';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Menu, X, ChevronDown, ChevronUp, BarChart2, TrendingUp, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { UpwardTriangle, DownwardTriangle } from '../components/ui/Triangleicons';
 import Donut3DThree from '../components/ui/Donut3DThree';
 const Dashboard = () => {
