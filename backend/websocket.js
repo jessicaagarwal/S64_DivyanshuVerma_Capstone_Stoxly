@@ -3,7 +3,6 @@ const EventEmitter = require('events');
 const Portfolio = require('./models/portfolio');
 require('dotenv').config();
 
-
 function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -21,89 +20,213 @@ class AlpacaWebSocket extends EventEmitter {
     super();
     this.socket = null;
     this.isConnected = false;
+    this.isAuthenticated = false;
     this.subscriptions = new Set();
-    this.priceCache = new Map(); 
-    this.updateQueue = new Map(); 
+    this.priceCache = new Map();
+    this.updateQueue = new Map();
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 5000;
+    this.connectionTimeout = null;
+  }
+
+  cleanup() {
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
+    
+    if (this.socket) {
+      try {
+        this.socket.terminate();
+      } catch (error) {
+        console.error('Error terminating socket:', error);
+      }
+      this.socket = null;
+    }
+    
+    this.isConnected = false;
+    this.isAuthenticated = false;
   }
 
   connect() {
-    this.socket = new WebSocket(process.env.ALPACA_WSS_URL);
+    // Cleanup any existing connection first
+    this.cleanup();
 
-    this.socket.on('open', () => {
-      console.log('Connected to Alpaca WebSocket');
-      this.isConnected = true;
-      // Authenticate with Alpaca
-      const authMsg = {
-        action: 'auth',
-        key: process.env.ALPACA_API_KEY,
-        secret: process.env.ALPACA_SECRET_KEY
-      };
-      this.socket.send(JSON.stringify(authMsg));
-    });
+    const wsUrl = process.env.ALPACA_WSS_URL || 'wss://stream.data.alpaca.markets/v2/iex';
+    console.log('Connecting to Alpaca WebSocket:', wsUrl);
 
-    this.socket.on('message', async (event) => {
-      try {
-        const data = JSON.parse(event);
-        this.emit('data', data);
-        if (data[0] && data[0].msg === 'authenticated') {
-          this.updateSubscriptions();
+    try {
+      this.socket = new WebSocket(wsUrl, {
+        handshakeTimeout: 10000,
+        perMessageDeflate: false
+      });
+
+      this.socket.on('open', () => {
+        console.log('Connected to Alpaca WebSocket');
+        this.isConnected = true;
+        this.reconnectAttempts = 0;
+        this.authenticate();
+      });
+
+      this.socket.on('message', async (event) => {
+        try {
+          const data = JSON.parse(event);
+          
+          if (Array.isArray(data)) {
+            const message = data[0];
+            
+            // Handle connection success
+            if (message.T === 'success' && message.msg === 'connected') {
+              console.log('WebSocket connection established');
+              return;
+            }
+            
+            // Handle authentication response
+            if (message.T === 'success' && message.msg === 'authenticated') {
+              console.log('Successfully authenticated with Alpaca');
+              this.isAuthenticated = true;
+              this.updateSubscriptions();
+              return;
+            }
+            
+            // Handle error messages
+            if (message.T === 'error') {
+              console.error('Alpaca WebSocket error:', message.msg);
+              if (message.code === 406) {
+                console.log('Connection limit exceeded. Waiting before reconnecting...');
+                this.cleanup();
+                this.connectionTimeout = setTimeout(() => this.connect(), 30000); // Wait 30 seconds
+                return;
+              }
+              return;
+            }
+          }
+
+          this.emit('data', data);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
         }
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+      });
+
+      this.socket.on('close', (code, reason) => {
+        console.log(`Disconnected from Alpaca WebSocket. Code: ${code}, Reason: ${reason || 'No reason provided'}`);
+        this.cleanup();
+        this.handleReconnect();
+      });
+
+      this.socket.on('error', (error) => {
+        console.error('WebSocket error:', error.message);
+        this.cleanup();
+      });
+
+    } catch (error) {
+      console.error('Error creating WebSocket connection:', error);
+      this.cleanup();
+      this.handleReconnect();
+    }
+  }
+
+  handleReconnect() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('Max reconnection attempts reached. Please check your connection and Alpaca credentials.');
+      return;
+    }
+
+    this.reconnectAttempts++;
+    this.reconnectDelay = Math.min(this.reconnectDelay * 1.5, 30000);
+    
+    console.log(`Attempting to reconnect in ${this.reconnectDelay/1000} seconds... (Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    
+    this.connectionTimeout = setTimeout(() => {
+      if (!this.isConnected) {
+        this.connect();
       }
-    });
+    }, this.reconnectDelay);
+  }
 
-    this.socket.on('close', () => {
-      console.log('Disconnected from Alpaca WebSocket');
-      this.isConnected = false;
-      setTimeout(() => this.connect(), 5000);
-    });
+  authenticate() {
+    if (!this.isConnected) {
+      console.error('Cannot authenticate: WebSocket not connected');
+      return;
+    }
 
-    this.socket.on('error', (error) => {
-      console.error('WebSocket error:', error);
-    });
+    const authMsg = {
+      action: 'auth',
+      key: process.env.ALPACA_API_KEY,
+      secret: process.env.ALPACA_SECRET_KEY
+    };
+
+    try {
+      console.log('Sending authentication request...');
+      this.socket.send(JSON.stringify(authMsg));
+    } catch (error) {
+      console.error('Error sending authentication request:', error);
+    }
   }
 
   updateSubscriptions() {
-    if (!this.isConnected) return;
-    if (this.subscriptions.size === 0) return;
+    if (!this.isConnected || !this.isAuthenticated) {
+      console.log('Cannot update subscriptions: WebSocket not connected or not authenticated');
+      return;
+    }
+
+    if (this.subscriptions.size === 0) {
+      return;
+    }
+
     const subscribeMsg = {
       action: 'subscribe',
       quotes: Array.from(this.subscriptions)
     };
-    this.socket.send(JSON.stringify(subscribeMsg));
-    console.log('Subscribed to symbols:', Array.from(this.subscriptions));
+
+    try {
+      this.socket.send(JSON.stringify(subscribeMsg));
+      console.log('Subscribed to symbols:', Array.from(this.subscriptions));
+    } catch (error) {
+      console.error('Error sending subscription request:', error);
+    }
   }
 
   subscribeToSymbols(symbols) {
-    if (!this.isConnected) return;
+    if (!this.isConnected || !this.isAuthenticated) {
+      console.log('Cannot subscribe: WebSocket not connected or not authenticated');
+      return;
+    }
+
     symbols.forEach(symbol => this.subscriptions.add(symbol));
     this.updateSubscriptions();
   }
 
   unsubscribeFromSymbols(symbols) {
-    if (!this.isConnected) return;
+    if (!this.isConnected || !this.isAuthenticated) {
+      console.log('Cannot unsubscribe: WebSocket not connected or not authenticated');
+      return;
+    }
+
     symbols.forEach(symbol => this.subscriptions.delete(symbol));
     const unsubscribeMsg = {
       action: 'unsubscribe',
       quotes: symbols
     };
-    this.socket.send(JSON.stringify(unsubscribeMsg));
-    console.log('Unsubscribed from symbols:', symbols);
+
+    try {
+      this.socket.send(JSON.stringify(unsubscribeMsg));
+      console.log('Unsubscribed from symbols:', symbols);
+    } catch (error) {
+      console.error('Error sending unsubscribe request:', error);
+    }
   }
 
- 
   getLatestPrice(symbol) {
     return this.priceCache.get(symbol);
   }
-
 
   queuePriceUpdate(symbol, price) {
     this.priceCache.set(symbol, price);
     this.updateQueue.set(symbol, price);
   }
 
-  // Add method to process queued updates
   async processQueuedUpdates() {
     if (this.updateQueue.size === 0) return;
 
@@ -129,10 +252,9 @@ class AlpacaWebSocket extends EventEmitter {
 }
 
 const alpacaWS = new AlpacaWebSocket();
-
 const debouncedProcessUpdates = debounce(() => {
   alpacaWS.processQueuedUpdates();
-}, 5000); // Process updates every 5 seconds
+}, 5000);
 
 function setupWebSocketServer(server) {
   const wss = new WebSocket.Server({ server });
@@ -150,11 +272,8 @@ function setupWebSocketServer(server) {
             const symbol = quote.S;
         
             alpacaWS.queuePriceUpdate(symbol, price);
-            
-            
             debouncedProcessUpdates();
 
-      
             const transformed = {
               type: 'quote',
               symbol: symbol,
@@ -166,7 +285,6 @@ function setupWebSocketServer(server) {
               timestamp: quote.t
             };
             ws.send(JSON.stringify(transformed));
-            
           }
         });
       }

@@ -1,17 +1,34 @@
 // src/components/LandingPage.jsx
 "use client"
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import './LandingPage.css';
-import Hero3DScene from '../components/Hero3DScene';
-import BitcoinModel from '../components/BitcoinModel';
 import Lenis from 'lenis';
-import CubeeModel from '../components/CubeeModel';
-import IconStrip from '../components/IconStrip';
 import { FaTwitter, FaLinkedinIn, FaGithub } from 'react-icons/fa';
-import ScrollFloat from '../components/ScrollFloat';
+import { useGLTF } from '@react-three/drei'; // Import useGLTF here for preloading
+
+// Lazy load heavy components
+const Hero3DScene = lazy(() => import('../components/Hero3DScene'));
+const BitcoinModel = lazy(() => import('../components/BitcoinModel'));
+const CubeeModel = lazy(() => import('../components/CubeeModel'));
+const IconStrip = lazy(() => import('../components/IconStrip'));
+const ScrollFloat = lazy(() => import('../components/ScrollFloat'));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="loading-fallback">
+    <div className="loading-spinner"></div>
+  </div>
+);
 
 const LandingPage = () => {
+  const [isVisible, setIsVisible] = useState({
+    hero: true,
+    bitcoin: false,
+    cubee: false,
+    dashboard: false
+  });
+
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
@@ -23,6 +40,35 @@ const LandingPage = () => {
       touchMultiplier: 2,
     });
     
+    // Preload 3D models as soon as the page component mounts
+    useGLTF.preload('/colored_coins.glb');
+    useGLTF.preload('/bitcoin_final.glb');
+    useGLTF.preload('/cubee.glb');
+
+    // Intersection Observer for lazy loading components
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(prev => ({
+              ...prev,
+              [entry.target.id]: true
+            }));
+          } else {
+            setIsVisible(prev => ({
+              ...prev,
+              [entry.target.id]: false
+            }));
+          }
+        });
+      },
+      { threshold: 0.2 } // Slightly increase threshold to load earlier
+    );
+
+    // Observe sections
+    const sections = document.querySelectorAll('.section-observer');
+    sections.forEach(section => observer.observe(section));
+    
     function raf(time) {
       lenis.raf(time);
       requestAnimationFrame(raf);
@@ -30,10 +76,10 @@ const LandingPage = () => {
     
     const rafId = requestAnimationFrame(raf);
     
-    // Cleanup function to prevent memory leaks
     return () => {
       cancelAnimationFrame(rafId);
       lenis.destroy();
+      observer.disconnect();
     };
   }, []);
     
@@ -65,7 +111,7 @@ const LandingPage = () => {
         </div>
       </div>
       
-      <div className="hero-section">
+      <div id="hero" className="hero-section section-observer">
         <div className="hero-content">
           <h1 className="main-heading">Step into the Future of Stock Portfolio Management</h1>
           <p className="sub-heading">
@@ -79,17 +125,27 @@ const LandingPage = () => {
         </div>
         
         <div className="hero-3d-container">
-          <Hero3DScene />
+          {isVisible.hero && (
+            <Suspense fallback={<LoadingFallback />}>
+              <Hero3DScene />
+            </Suspense>
+          )}
         </div>
       </div>
 
-      <div className="hero-section2">
-        <BitcoinModel />
+      <div id="bitcoin" className="hero-section2 section-observer">
+        {isVisible.bitcoin && (
+          <Suspense fallback={<LoadingFallback />}>
+            <BitcoinModel />
+          </Suspense>
+        )}
         <section className="trading-interface">
           <div className="trading-header">
-            <ScrollFloat containerClassName="trading-subtitle">
-              JOIN THE REVOLUTION
-            </ScrollFloat>
+            <Suspense fallback={<div>JOIN THE REVOLUTION</div>}>
+              <ScrollFloat containerClassName="trading-subtitle">
+                JOIN THE REVOLUTION
+              </ScrollFloat>
+            </Suspense>
             <h2 className="trading-title">Setting a New Standard in STOCK PORTFOLIO MANAGEMENT</h2>
             <p className="trading-description">
               Our innovative dynamic UI technology delivers unmatched performance, making stock portfolio management more effective.
@@ -143,12 +199,14 @@ const LandingPage = () => {
         </section>
       </div>
 
-      <div className="hero-section3">
+      <div id="cubee" className="hero-section3 section-observer">
         <div className="universe-interface">
           <div className="universe-header">
-            <ScrollFloat containerClassName="universe-subtitle">
-              THE CRYPTO UNIVERSE
-            </ScrollFloat>
+            <Suspense fallback={<div>THE CRYPTO UNIVERSE</div>}>
+              <ScrollFloat containerClassName="universe-subtitle">
+                THE CRYPTO UNIVERSE
+              </ScrollFloat>
+            </Suspense>
             <h2 className="universe-title">Entire Crypto Universe</h2>
             <p className="universe-description">
               Experience the comprehensive selection of cryptocurrencies available on our platform. 
@@ -156,16 +214,20 @@ const LandingPage = () => {
             </p>
           </div>
           <div className="crypto-icons-container">
-            
-            <IconStrip position="top" />
-            <CubeeModel />
-            <IconStrip position="bottom" />
-            
+            {isVisible.cubee && (
+              <>
+                <Suspense fallback={<LoadingFallback />}>
+                  <IconStrip position="top" />
+                  <CubeeModel />
+                  <IconStrip position="bottom" />
+                </Suspense>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="hero-section4">
+      <div id="dashboard" className="hero-section4 section-observer">
         <div className="dashboard-showcase">
           <div className="section-content">
             <div className="text-content">
@@ -179,7 +241,7 @@ const LandingPage = () => {
             <div className="dashboard-preview">
               <div className="dashboard-image">
                 <div className="glow-effect"></div>
-                <img src="/dashboard-preview.png" alt="Trading Dashboard Interface" />
+                <img src="/dashboard-preview.png" alt="Trading Dashboard Interface" loading="lazy" />
               </div>
             </div>
           </div>
@@ -194,10 +256,10 @@ const LandingPage = () => {
                 <path d="M3 3V21H21" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M7 14L11 10L15 14L21 8" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span>CryptoSoft</span>
+              <span>StockFolio</span>
             </div>
             <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1rem', maxWidth: '300px' }}>
-              Your trusted partner in cryptocurrency portfolio management and trading analytics.
+              Your trusted partner in portfolio management and trading analytics.
             </p>
             <div className="footer-social">
               <a href="#" className="social-icon">
@@ -216,9 +278,6 @@ const LandingPage = () => {
             <h3>Company</h3>
             <div className="footer-links">
               <a href="#">About Us</a>
-              <a href="#">Careers</a>
-              <a href="#">Partners</a>
-              <a href="#">Press Kit</a>
             </div>
           </div>
 
@@ -228,14 +287,12 @@ const LandingPage = () => {
               <a href="#">Documentation</a>
               <a href="#">API Reference</a>
               <a href="#">Market Data</a>
-              <a href="#">Blog</a>
             </div>
           </div>
 
           <div className="footer-column">
             <h3>Support</h3>
             <div className="footer-links">
-              <a href="#">Help Center</a>
               <a href="#">Contact Us</a>
               <a href="#">Privacy Policy</a>
               <a href="#">Terms of Service</a>
@@ -244,7 +301,7 @@ const LandingPage = () => {
         </div>
         
         <div className="footer-bottom">
-          <p>&copy; 2024 CryptoSoft. All rights reserved.</p>
+          <p>&copy; 2025 StockFolio. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -112,6 +112,13 @@ body {
   border-radius: 12px;
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  z-index: 9999;
+  position: relative;
 }
 
 .search-bar {
@@ -120,7 +127,8 @@ body {
   background: rgba(255, 255, 255, 0.05);
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  width: 300px;
+  flex-grow: 1;
+  max-width: 400px;
 }
 
 .search-bar input {
@@ -138,7 +146,7 @@ body {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .notification {
@@ -157,11 +165,90 @@ body {
   border-radius: 50%;
 }
 
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.user-profile:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.logout-dropdown {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background: rgba(30, 30, 30, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  padding: 8px 0;
+  z-index: 9999;
+  min-width: 140px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.user-profile:hover .logout-dropdown {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.user-profile .logout-dropdown.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.logout-dropdown button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 15px;
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.logout-dropdown button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--accent-orange);
+}
+
+.logout-dropdown button svg {
+  font-size: 1.1rem;
+}
+
 .user-profile img {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   border: 2px solid var(--accent-orange);
+}
+
+.user-profile img:hover {
+  opacity: 0.9;
+}
+
+.user-profile .user-name {
+  font-weight: 500;
+  color: #ffffff;
 }
 
 /* Dashboard Content */
@@ -181,6 +268,8 @@ body {
   grid-column: 1 / -1;
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
 }
 
 .section-header {
@@ -213,59 +302,128 @@ body {
   overflow-x: auto;
 }
 
-table {
+.holdings-table table {
   width: 100%;
   border-collapse: collapse;
 }
 
-th, td {
+.holdings-table th,
+.holdings-table td {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  word-break: break-word;
 }
 
-th {
+.holdings-table th {
   color: var(--text-light);
   font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
 }
 
-.stock-info {
+.holdings-table tbody tr {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  overflow: hidden;
+}
+
+.holdings-table tbody tr:hover {
+  background: rgba(255, 165, 0, 0.05);
+  border-color: rgba(255, 165, 0, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.holdings-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.holdings-table .stock-info {
   display: flex;
   flex-direction: column;
 }
 
-.symbol {
+.holdings-table .symbol {
   font-weight: bold;
   color: var(--accent-orange);
+  font-size: 1.05rem;
 }
 
-.name {
-  font-size: 0.9rem;
+.holdings-table .name {
+  font-size: 0.85rem;
   color: var(--text-light);
 }
 
-.profit {
+.holdings-table .profit,
+.holdings-table .loss {
+  font-weight: bold;
+  position: relative;
+  transition: all 0.3s ease;
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.holdings-table .profit {
   color: var(--profit-green);
-  position: relative;
-  transition: all 0.3s ease;
+  background: rgba(0, 255, 0, 0.1);
+  border: 1px solid rgba(0, 255, 0, 0.2);
+  text-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
 }
 
-.profit:hover {
-  transform: translateY(-2px);
-  color: #00ff00;
-  text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
-}
-
-.loss {
+.holdings-table .loss {
   color: var(--loss-red);
-  position: relative;
-  transition: all 0.3s ease;
+  background: rgba(255, 76, 76, 0.1);
+  border: 1px solid rgba(255, 76, 76, 0.2);
+  text-shadow: 0 0 8px rgba(255, 76, 76, 0.3);
 }
 
-.loss:hover {
-  transform: translateY(-2px);
-  color: #ff4c4c;
-  text-shadow: 0 0 8px rgba(255, 76, 76, 0.5);
+.holdings-table .profit:hover {
+  background: rgba(0, 255, 0, 0.2);
+  border-color: rgba(0, 255, 0, 0.4);
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+}
+
+.holdings-table .loss:hover {
+  background: rgba(255, 76, 76, 0.2);
+  border-color: rgba(255, 76, 76, 0.4);
+  box-shadow: 0 0 15px rgba(255, 76, 76, 0.4);
+}
+
+.holdings-table .icon-btn {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin: 0 0.3rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+  padding: 0.3rem;
+  border-radius: 4px;
+}
+
+.holdings-table .icon-btn:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.holdings-table .icon-btn:hover svg {
+  filter: drop-shadow(0 0 5px rgba(255, 165, 0, 0.5));
+}
+
+.holdings-table .icon-btn:first-child {
+  margin-left: 0;
+}
+
+.holdings-table .icon-btn:last-child {
+  margin-right: 0;
 }
 
 /* Performance Summary */
@@ -873,4 +1031,31 @@ th {
   letter-spacing: 0.04em;
   opacity: 0.8;
   z-index: 2;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.user-section .market-calendar {
+  margin: 0;
+  max-width: 250px;
+}
+
+.notifications {
+  position: relative;
+  cursor: pointer;
+}
+
+.notification-icon {
+  font-size: 1.2rem;
+  color: #fff;
+  transition: color 0.2s ease;
+}
+
+.notification-icon:hover {
+  color: #4CAF50;
 } 

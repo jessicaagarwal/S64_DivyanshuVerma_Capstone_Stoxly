@@ -1,0 +1,93 @@
+.market-calendar {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  color: #fff;
+  max-width: 300px;
+}
+
+.market-calendar h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  color: #fff;
+  text-align: center;
+}
+
+.calendar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.calendar-day {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.calendar-day:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.calendar-day .date {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.calendar-day .times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.market-calendar-loading,
+.market-calendar-error {
+  text-align: center;
+  padding: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.market-calendar-error {
+  color: #ff6b6b;
+}
+
+.market-status {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.market-status.open {
+  background-color: rgba(0, 255, 0, 0.1);
+  color: var(--profit-green);
+  border: 1px solid var(--profit-green);
+}
+
+.market-status.closed {
+  background-color: rgba(255, 76, 76, 0.1);
+  color: var(--loss-red);
+  border: 1px solid var(--loss-red);
+}
+
+.market-status.loading,
+.market-status.unknown,
+.market-status-error {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  border: 1px solid var(--text-light);
+}
+
+.market-status-error {
+  color: var(--loss-red);
+  border-color: var(--loss-red);
+} 

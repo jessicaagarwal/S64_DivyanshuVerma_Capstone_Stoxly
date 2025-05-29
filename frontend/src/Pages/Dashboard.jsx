@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaBell, FaSearch, FaPlus, FaChartLine, FaNewspaper, FaStar, FaChartBar, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaBell, FaSearch, FaPlus, FaChartLine, FaNewspaper, FaStar, FaChartBar, FaEdit, FaTrash, FaSignOutAlt } from 'react-icons/fa';
 import NewsSection from '../components/NewsSection';
 import './Dashboard.css';
 import axios from 'axios';
@@ -9,6 +9,9 @@ import GainersCard from '../components/ui/GainersCard';
 import LosersCard from '../components/ui/LosersCard';
 import { UpwardTriangle, DownwardTriangle } from '../components/ui/Triangleicons';
 import Donut3DThree from '../components/ui/Donut3DThree';
+import MarketCalendar from '../components/ui/MarketCalendar';
+import { useNavigate } from 'react-router-dom';
+
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,6 +29,10 @@ const Dashboard = () => {
   const wsRef = useRef(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [usTime, setUsTime] = useState(new Date());
+  const [userProfilePicture, setUserProfilePicture] = useState('/src/assets/default-avatar.png');
+  const [showLogoutDropdown, setShowLogoutDropdown] = useState(false);
+
+  const navigate = useNavigate();
 
   // GSAP refs for loader/data containers
   const holdingsLoaderRef = useRef();
@@ -68,17 +75,28 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch real holdings on mount
+  // Fetch real holdings and user profile picture on mount
   useEffect(() => {
-    const fetchHoldingsAndNames = async () => {
+    const fetchHoldingsAndNamesAndProfile = async () => {
       setHoldingsLoading(true);
       setHoldingsError('');
       try {
-        // 1. Fetch holdings
+        // 1. Fetch holdings and user profile picture
+        console.log('Fetching holdings and user profile...');
         const res = await axios.get('http://localhost:5000/api/portfolio', { withCredentials: true });
-        const data = res.data;
+        const { portfolio: data, user } = res.data;
+
+        console.log('Portfolio API response data:', res.data);
+
+        // Set user profile picture if available
+        if (user?.profilePicture) {
+          console.log('User profile picture found:', user.profilePicture);
+          // Use the backend proxy endpoint to fetch the image
+          setUserProfilePicture(`http://localhost:5000/api/user/profile-picture?url=${encodeURIComponent(user.profilePicture)}`);
+        }
 
         // 2. Get unique symbols
+        console.log('Processing holdings data...', data);
         const symbols = [...new Set(data.map(h => h.symbol).filter(Boolean))];
         let symbolToName = {};
         if (symbols.length > 0) {
@@ -109,7 +127,7 @@ const Dashboard = () => {
       }
     };
 
-    fetchHoldingsAndNames();
+    fetchHoldingsAndNamesAndProfile();
   }, []);
 
   // Add price update debouncing
@@ -291,81 +309,6 @@ const Dashboard = () => {
     }
   };
 
-  const [editModal, setEditModal] = useState({ open: false, stock: null, originalSymbol: '', originalDate: '' });
-  const [editForm, setEditForm] = useState({ quantity: '', date: '' });
-  const [editLoading, setEditLoading] = useState(false);
-  const [editError, setEditError] = useState('');
-  const [deleteModal, setDeleteModal] = useState({ open: false, stock: null });
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
-
-  // When Edit icon is clicked, prefill the form and store original symbol/date
-  const handleEditClick = (stock) => {
-    setEditModal({ open: true, stock, originalSymbol: stock.symbol, originalDate: stock.date });
-  };
-
-  // When Edit icon is clicked, use handleEditClick
-  const handleEditFormChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Submit edit: call new endpoint with original symbol/date
-  const handleEditStockSubmit = async (e) => {
-    e.preventDefault();
-    setEditLoading(true);
-    setEditError('');
-    try {
-      const res = await fetch(`http://localhost:5000/api/portfolio/${editModal.originalSymbol}/${editModal.originalDate}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          quantity: editForm.quantity,
-          newDate: editForm.date
-        }),
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to update stock');
-      }
-      setEditModal({ open: false, stock: null, originalSymbol: '', originalDate: '' });
-      await refreshHoldings();
-    } catch (err) {
-      setEditError(err.message);
-    } finally {
-      setEditLoading(false);
-    }
-  };
-
-  const handleDeleteClick = (stock) => {
-    setDeleteModal({ open: true, stock });
-    setDeleteError('');
-  };
-
-  const handleDeleteConfirm = async () => {
-    setDeleteLoading(true);
-    setDeleteError('');
-    try {
-      const symbol = deleteModal.stock.symbol;
-      const date = deleteModal.stock.date;
-      const res = await fetch(`http://localhost:5000/api/portfolio/${symbol}?date=${date}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to delete stock');
-      }
-      setHoldings(prev => prev.filter(h => !(h.symbol === symbol && h.date === date)));
-      setDeleteModal({ open: false, stock: null });
-    } catch (err) {
-      setDeleteError(err.message);
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
   // Update the holdings table rendering to use the new price updates
   const renderHoldingsTable = () => (
     <table>
@@ -377,7 +320,6 @@ const Dashboard = () => {
           <th>Current Price (Per Share)</th>
           <th>Profit/Loss</th>
           <th>Total Value</th>
-          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -411,14 +353,6 @@ const Dashboard = () => {
                 </div>
               </td>
               <td>${(currentPrice * stock.quantity).toFixed(2)}</td>
-              <td>
-                <button className="icon-btn" title="Edit" onClick={() => handleEditClick(stock)}>
-                  <FaEdit />
-                </button>
-                <button className="icon-btn" title="Delete" onClick={() => handleDeleteClick(stock)}>
-                  <FaTrash />
-                </button>
-              </td>
             </tr>
           );
         })}
@@ -438,32 +372,56 @@ const Dashboard = () => {
   const [todaysGain, setTodaysGain] = useState(0);
   const [todaysGainStats, setTodaysGainStats] = useState({ gainCount: 0, lossCount: 0, gainAmount: 0, lossAmount: 0, gainers: [], losers: [] });
 
-  // Fetch yesterday's close prices after holdings are loaded
+  // Fetch yesterday's close prices after holdings are loaded initially and then every 12 hours
   useEffect(() => {
-    if (!holdings.length) return;
+    if (!holdings.length) return; // Only fetch if there are holdings
+
     const fetchYesterdaysCloses = async () => {
       try {
+        console.log('Fetching yesterday closes...');
         const symbols = holdings.map(h => h.symbol).join(',');
-        const res = await fetch(`http://localhost:5000/api/market/yesterday-close?symbols=${symbols}`);
-        const data = await res.json();
+        const res = await axios.get(`http://localhost:5000/api/market/yesterday-close?symbols=${symbols}`);
+        const data = res.data;
+        console.log('Yesterday closes response:', data);
         setYesterdayCloses(data);
       } catch (err) {
-        setYesterdayCloses({});
+        console.error('Error fetching yesterday close:', err);
+        setYesterdayCloses({}); // Set to empty on error
       }
     };
-    fetchYesterdaysCloses();
-  }, [holdings]);
 
-  // Calculate today's gain after yesterdayCloses is loaded
+    // Fetch initially
+    fetchYesterdaysCloses();
+
+    // Set up interval for fetching every 12 hours (12 * 60 * 60 * 1000 ms)
+    const interval = setInterval(() => {
+      fetchYesterdaysCloses();
+    }, 12 * 60 * 60 * 1000);
+
+    // Clean up interval and logs on component unmount
+    return () => {
+      clearInterval(interval);
+      console.log('Today\'s Gain useEffect cleaned up.');
+    };
+  }, [holdings.map(h => h.symbol).join(',')]); // Dependency on holdings symbols
+
+  // Calculate today's gain after holdings or yesterdayCloses are loaded/updated
   useEffect(() => {
-    if (!holdings.length || Object.keys(yesterdayCloses).length === 0) return;
+
+    if (!holdings.length || Object.keys(yesterdayCloses).length === 0) {
+      setTodaysGain(0);
+      setTodaysGainStats({ gainCount: 0, lossCount: 0, gainAmount: 0, lossAmount: 0, gainers: [], losers: [] });
+      console.log('Skipping Today\'s Gain calculation: Holdings or Yesterday Closes not available.');
+      return;
+    }
     let totalGain = 0;
     let gainCount = 0, lossCount = 0, gainAmount = 0, lossAmount = 0;
     let gainers = [], losers = [];
     holdings.forEach(stock => {
       const currentPrice = stock.currentPrice;
       const yesterdayClose = yesterdayCloses[stock.symbol];
-      if (currentPrice && yesterdayClose) {
+
+      if (currentPrice !== undefined && currentPrice !== null && yesterdayClose !== undefined && yesterdayClose !== null) {
         const gain = (currentPrice - yesterdayClose) * stock.quantity;
         totalGain += gain;
         if (gain >= 0) {
@@ -475,11 +433,15 @@ const Dashboard = () => {
           lossAmount += gain;
           losers.push({ ...stock, gain });
         }
+      } else {
+        console.warn(`Skipping gain calculation for ${stock.symbol}: currentPrice or yesterdayClose is missing.`);
       }
     });
+
     setTodaysGain(totalGain);
     setTodaysGainStats({ gainCount, lossCount, gainAmount, lossAmount, gainers, losers });
-  }, [holdings, yesterdayCloses]);
+
+  }, [holdings, yesterdayCloses]); // Recalculate when holdings or yesterdayCloses change
 
   // Add state for unrealized gain stats
   const [unrealizedStats, setUnrealizedStats] = useState({ total: 0, profitCount: 0, lossCount: 0, profitAmount: 0, lossAmount: 0, highestProfit: null, highestLoss: null });
@@ -506,6 +468,19 @@ const Dashboard = () => {
     });
     setUnrealizedStats({ total, profitCount, lossCount, profitAmount, lossAmount, highestProfit, highestLoss });
   }, [holdings]);
+
+  // Function to handle logout
+  const handleLogout = async () => {
+    try {
+      await axios.post('http://localhost:5000/api/auth/logout', {}, { withCredentials: true });
+      // Redirect to landing page after successful logout
+      navigate('/');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Even if logout fails on backend, attempt to redirect
+      navigate('/');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -543,9 +518,27 @@ const Dashboard = () => {
               >
                 <span style={{fontSize: '2rem', color: 'var(--accent-orange)'}}>&#9776;</span>
               </button>
+              <div className="search-bar">
+                <FaSearch className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search stocks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
               <div className="nav-right">
-                <div className="user-profile">
-                  <img src="/src/assets/default-avatar.png" alt="User" />
+                <MarketCalendar />
+                <div className="notifications">
+                  <FaBell className="notification-icon" />
+                </div>
+                <div className="user-profile" onClick={() => setShowLogoutDropdown(!showLogoutDropdown)}>
+                  <img src={userProfilePicture} alt="User" />
+                  {showLogoutDropdown && (
+                    <div className="logout-dropdown">
+                      <button onClick={handleLogout}><FaSignOutAlt /> Logout</button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -793,60 +786,6 @@ const Dashboard = () => {
                   {addError && <div className="error-message">{addError}</div>}
                   {addSuccess && <div className="success-message">{addSuccess}</div>}
                 </form>
-              </div>
-            </div>
-          )}
-
-          {/* Edit Stock Modal */}
-          {editModal.open && (
-            <div className="modal-overlay">
-              <div className="modal edit-stock-modal">
-                <h3>Edit Stock</h3>
-                <form onSubmit={handleEditStockSubmit}>
-                  <label>
-                    Quantity:
-                    <input
-                      type="number"
-                      name="quantity"
-                      value={editForm.quantity}
-                      onChange={handleEditFormChange}
-                      min="1"
-                      required
-                    />
-                  </label>
-                  <label>
-                    Purchase Date:
-                    <input
-                      type="date"
-                      name="date"
-                      value={editForm.date}
-                      onChange={handleEditFormChange}
-                      required
-                    />
-                  </label>
-                  <div className="modal-actions">
-                    <button type="submit" disabled={editLoading}>{editLoading ? 'Saving...' : 'Save Changes'}</button>
-                    <button type="button" onClick={() => setEditModal({ open: false, stock: null, originalSymbol: '', originalDate: '' })}>Cancel</button>
-                  </div>
-                  {editError && <div className="error-message">{editError}</div>}
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* Delete Confirmation Modal */}
-          {deleteModal.open && (
-            <div className="modal-overlay">
-              <div className="modal delete-stock-modal">
-                <h3>Delete Stock</h3>
-                <p>Are you sure you want to delete <b>{deleteModal.stock.symbol}</b> ({deleteModal.stock.name})?</p>
-                <div className="modal-actions">
-                  <button onClick={handleDeleteConfirm} disabled={deleteLoading} style={{ background: 'red', color: 'white' }}>
-                    {deleteLoading ? 'Deleting...' : 'Delete'}
-                  </button>
-                  <button onClick={() => setDeleteModal({ open: false, stock: null })} disabled={deleteLoading}>Cancel</button>
-                </div>
-                {deleteError && <div className="error-message">{deleteError}</div>}
               </div>
             </div>
           )}

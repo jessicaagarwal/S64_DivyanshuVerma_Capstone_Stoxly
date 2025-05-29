@@ -295,8 +295,12 @@ app.get('/api/portfolio', authenticateJWT, async (req, res) => {
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
     }
+    // Fetch the user and their portfolio
+    const user = await User.findById(userId).select('profilePicture'); // Only select profilePicture
     const portfolio = await Portfolio.find({ user: userId }).sort({ date: -1 });
-    res.json(portfolio);
+
+    // Combine portfolio data with user profile picture
+    res.json({ portfolio, user: { profilePicture: user?.profilePicture } });
   } catch (error) {
     console.error('Error fetching portfolio:', error);
     res.status(500).json({ error: 'Failed to fetch portfolio' });
@@ -430,6 +434,15 @@ app.get('/auth/google/callback',
   }
 );
 
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // true in production
+    sameSite: 'lax',
+  });
+  res.json({ message: 'Logged out successfully' });
+});
+
 app.get('/api/news', async (req, res) => {
   try {
     const { symbols } = req.query;
@@ -533,7 +546,6 @@ app.get('/api/market/latest-bars', async (req, res) => {
 // Get market movers
 app.get('/api/market/market-movers', async (req, res) => {
   try {
-    console.log('Fetching market movers...');
     // Fetch top gainers and losers from Alpaca
     const response = await axios.get('https://data.alpaca.markets/v1beta1/screener/stocks/movers?top=3', {
       headers: {
@@ -579,7 +591,6 @@ app.get('/api/market/market-movers', async (req, res) => {
     }));
 
     const result = { gainers, losers };
-    console.log('Sending response:', result);
     res.json(result);
   } catch (error) {
     console.error('Error fetching market movers:', error.response?.data || error.message);
@@ -607,8 +618,13 @@ app.get('/api/market/yesterday-close', async (req, res) => {
     if (symbolList.length === 0) {
       return res.status(400).json({ error: 'No valid symbols provided' });
     }
-    const yesterday = getPreviousTradingDay();
-    const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbolList.join(',')}&timeframe=1Day&start=${yesterday}&end=${yesterday}`;
+    // Fetch the last 5 trading days of data to ensure we get a close price
+    const today = new Date().toISOString().split('T')[0];
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5); // Go back 5 calendar days
+    const formattedFiveDaysAgo = fiveDaysAgo.toISOString().split('T')[0];
+
+    const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbolList.join(',')}&timeframe=1Day&start=${formattedFiveDaysAgo}&end=${today}&feed=iex`;
     const response = await axios.get(url, {
       headers: {
         'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
@@ -617,13 +633,60 @@ app.get('/api/market/yesterday-close', async (req, res) => {
     });
     const closes = {};
     for (const symbol of symbolList) {
-      const bars = response.data.bars[symbol];
-      closes[symbol] = bars && bars.length > 0 ? bars[0].c : null;
+      // Find the most recent closing price from the returned bars
+      const bars = response.data.bars?.[symbol] || [];
+      const mostRecentBar = bars.length > 0 ? bars[bars.length - 1] : null;
+      closes[symbol] = mostRecentBar ? mostRecentBar.c : null;
     }
     res.json(closes);
   } catch (error) {
     console.error('Error fetching yesterday close:', error.response?.data || error.message);
     res.status(500).json({ error: 'Failed to fetch yesterday close' });
+  }
+});
+
+// Market Calendar endpoint
+app.get('/api/market/calendar', async (req, res) => {
+  try {
+    const response = await axios.get('https://paper-api.alpaca.markets/v2/calendar', {
+      headers: {
+        'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
+        'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY,
+      },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching market calendar:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch market calendar' });
+  }
+});
+
+// Endpoint to proxy user profile pictures from Google
+app.get('/api/user/profile-picture', async (req, res) => {
+  const imageUrl = req.query.url;
+
+  if (!imageUrl) {
+    return res.status(400).json({ error: 'Image URL is required' });
+  }
+
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer' // Get response as binary data
+    });
+
+    // Set appropriate content type header
+    res.setHeader('Content-Type', response.headers['content-type']);
+    // Cache the image in the browser for a reasonable time (e.g., 1 hour)
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(response.data); // Send the image data
+  } catch (error) {
+    console.error('Error fetching profile picture from Google:', error.message);
+    // Respond with a 404 for not found or 500 for other errors
+    if (error.response && error.response.status === 404) {
+       res.status(404).json({ error: 'Profile picture not found' });
+    } else {
+       res.status(500).json({ error: 'Failed to fetch profile picture' });
+    }
   }
 });
 
