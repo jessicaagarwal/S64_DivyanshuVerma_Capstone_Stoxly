@@ -32,6 +32,15 @@ const Dashboard = () => {
   const [userProfilePicture, setUserProfilePicture] = useState('/src/assets/default-avatar.png');
   const [showLogoutDropdown, setShowLogoutDropdown] = useState(false);
 
+  // Add edit and delete related states
+  const [editModal, setEditModal] = useState({ open: false, stock: null, originalSymbol: '', originalDate: '' });
+  const [editForm, setEditForm] = useState({ quantity: '', date: '' });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [deleteModal, setDeleteModal] = useState({ open: false, stock: null });
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
   const navigate = useNavigate();
 
   // GSAP refs for loader/data containers
@@ -309,7 +318,73 @@ const Dashboard = () => {
     }
   };
 
-  // Update the holdings table rendering to use the new price updates
+  // Add edit and delete handlers
+  const handleEditClick = (stock) => {
+    setEditModal({ open: true, stock, originalSymbol: stock.symbol, originalDate: stock.date });
+    setEditForm({ quantity: stock.quantity, date: stock.date }); // Prefill edit form
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditStockSubmit = async (e) => {
+    e.preventDefault();
+    setEditLoading(true);
+    setEditError('');
+    try {
+      const res = await fetch(`http://localhost:5000/api/portfolio/${editModal.originalSymbol}/${editModal.originalDate}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quantity: editForm.quantity,
+          newDate: editForm.date
+        }),
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update stock');
+      }
+      setEditModal({ open: false, stock: null, originalSymbol: '', originalDate: '' });
+      await refreshHoldings();
+    } catch (err) {
+      setEditError(err.message);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (stock) => {
+    setDeleteModal({ open: true, stock });
+    setDeleteError('');
+  };
+
+  const handleDeleteConfirm = async () => {
+    setDeleteLoading(true);
+    setDeleteError('');
+    try {
+      const symbol = deleteModal.stock.symbol;
+      const date = deleteModal.stock.date;
+      const res = await fetch(`http://localhost:5000/api/portfolio/${symbol}?date=${date}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete stock');
+      }
+      setHoldings(prev => prev.filter(h => !(h.symbol === symbol && h.date === date)));
+      setDeleteModal({ open: false, stock: null });
+    } catch (err) {
+      setDeleteError(err.message);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // Update the holdings table rendering to include edit/delete buttons
   const renderHoldingsTable = () => (
     <table>
       <thead>
@@ -320,6 +395,7 @@ const Dashboard = () => {
           <th>Current Price (Per Share)</th>
           <th>Profit/Loss</th>
           <th>Total Value</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -353,6 +429,14 @@ const Dashboard = () => {
                 </div>
               </td>
               <td>${(currentPrice * stock.quantity).toFixed(2)}</td>
+              <td>
+                <button className="icon-btn" title="Edit" onClick={() => handleEditClick(stock)}>
+                  <FaEdit />
+                </button>
+                <button className="icon-btn" title="Delete" onClick={() => handleDeleteClick(stock)}>
+                  <FaTrash />
+                </button>
+              </td>
             </tr>
           );
         })}
@@ -786,6 +870,60 @@ const Dashboard = () => {
                   {addError && <div className="error-message">{addError}</div>}
                   {addSuccess && <div className="success-message">{addSuccess}</div>}
                 </form>
+              </div>
+            </div>
+          )}
+
+          {/* Edit Stock Modal */}
+          {editModal.open && (
+            <div className="modal-overlay">
+              <div className="modal edit-stock-modal">
+                <h3>Edit Stock</h3>
+                <form onSubmit={handleEditStockSubmit}>
+                  <label>
+                    Quantity:
+                    <input
+                      type="number"
+                      name="quantity"
+                      value={editForm.quantity}
+                      onChange={handleEditFormChange}
+                      min="1"
+                      required
+                    />
+                  </label>
+                  <label>
+                    Purchase Date:
+                    <input
+                      type="date"
+                      name="date"
+                      value={editForm.date}
+                      onChange={handleEditFormChange}
+                      required
+                    />
+                  </label>
+                  <div className="modal-actions">
+                    <button type="submit" disabled={editLoading}>{editLoading ? 'Saving...' : 'Save Changes'}</button>
+                    <button type="button" onClick={() => setEditModal({ open: false, stock: null, originalSymbol: '', originalDate: '' })}>Cancel</button>
+                  </div>
+                  {editError && <div className="error-message">{editError}</div>}
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Delete Confirmation Modal */}
+          {deleteModal.open && (
+            <div className="modal-overlay">
+              <div className="modal delete-stock-modal">
+                <h3>Delete Stock</h3>
+                <p>Are you sure you want to delete <b>{deleteModal.stock.symbol}</b> ({deleteModal.stock.name})?</p>
+                <div className="modal-actions">
+                  <button onClick={handleDeleteConfirm} disabled={deleteLoading} style={{ background: 'red', color: 'white' }}>
+                    {deleteLoading ? 'Deleting...' : 'Delete'}
+                  </button>
+                  <button onClick={() => setDeleteModal({ open: false, stock: null })} disabled={deleteLoading}>Cancel</button>
+                </div>
+                {deleteError && <div className="error-message">{deleteError}</div>}
               </div>
             </div>
           )}
