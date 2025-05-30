@@ -692,7 +692,20 @@ app.get('/api/user/profile-picture', async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
-setupWebSocketServer(server);
-server.listen(PORT, () => {
-  console.log(`Server and WebSocket running on port ${PORT}`);
-}); 
+
+// Only start the server if we're not in a test environment
+if (process.env.NODE_ENV !== 'test') {
+  setupWebSocketServer(server);
+  server.listen(PORT, () => {
+    console.log(`Server and WebSocket running on port ${PORT}`);
+  });
+}
+
+// For testing purposes
+if (process.env.NODE_ENV === 'test') {
+  app.listen = function() {
+    return server;
+  };
+}
+
+module.exports = { app, server }; 
