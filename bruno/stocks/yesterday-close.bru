@@ -1,0 +1,24 @@
+meta {
+  name: Get Yesterday's Close
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{$process.env.BASE_URL}}/api/market/yesterday-close?symbols=AAPL,MSFT,GOOGL
+  auth: none
+}
+
+docs {
+  Get yesterday's closing prices for specified symbols.
+  
+  Query Parameters:
+  - symbols: Comma-separated list of stock symbols
+  
+  Expected Response:
+  {
+    "AAPL": 175.50,
+    "MSFT": 420.75,
+    "GOOGL": 150.25
+  }
+} 

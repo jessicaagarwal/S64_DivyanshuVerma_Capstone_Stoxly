@@ -1,0 +1,27 @@
+meta {
+  name: Delete Stock from Portfolio
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{$process.env.BASE_URL}}/api/portfolio/:symbol?date=2024-03-20
+  auth: bearer
+}
+
+docs {
+  Delete a stock from the user's portfolio.
+  Requires authentication.
+  
+  URL Parameters:
+  - symbol: Stock symbol (e.g., AAPL)
+  
+  Query Parameters:
+  - date: (Optional) Specific purchase date to delete (YYYY-MM-DD)
+  
+  Expected Response:
+  {
+    "message": "Stock(s) removed successfully",
+    "deletedCount": 1
+  }
+} 

@@ -1,0 +1,32 @@
+meta {
+  name: Get Market Movers
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{$process.env.BASE_URL}}/api/market/market-movers
+  auth: none
+}
+
+docs {
+  Get top gainers and losers in the market.
+  
+  Expected Response:
+  {
+    "gainers": [
+      {
+        "symbol": "AAPL",
+        "name": "Apple Inc.",
+        "change": 2.5
+      }
+    ],
+    "losers": [
+      {
+        "symbol": "MSFT",
+        "name": "Microsoft Corporation",
+        "change": -1.8
+      }
+    ]
+  }
+} 

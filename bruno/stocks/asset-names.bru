@@ -1,0 +1,24 @@
+meta {
+  name: Get Asset Names
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{$process.env.BASE_URL}}/api/asset-names?symbols=AAPL,MSFT,GOOGL
+  auth: none
+}
+
+docs {
+  Get company names for specified stock symbols.
+  
+  Query Parameters:
+  - symbols: Comma-separated list of stock symbols
+  
+  Expected Response:
+  {
+    "AAPL": "Apple Inc.",
+    "MSFT": "Microsoft Corporation",
+    "GOOGL": "Alphabet Inc."
+  }
+} 

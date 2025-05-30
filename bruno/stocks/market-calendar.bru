@@ -1,0 +1,23 @@
+meta {
+  name: Get Market Calendar
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{$process.env.BASE_URL}}/api/market/calendar
+  auth: none
+}
+
+docs {
+  Get market calendar information.
+  
+  Expected Response:
+  {
+    "date": "2024-03-20",
+    "open": "09:30",
+    "close": "16:00",
+    "session_open": "04:00",
+    "session_close": "20:00"
+  }
+} 

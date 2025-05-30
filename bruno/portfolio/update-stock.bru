@@ -1,0 +1,38 @@
+meta {
+  name: Update Stock in Portfolio
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{$process.env.BASE_URL}}/api/portfolio/:symbol/:date
+  body: json {
+    "quantity": 15,
+    "newDate": "2024-03-21"
+  }
+  auth: bearer
+}
+
+docs {
+  Update a stock in the user's portfolio.
+  Requires authentication.
+  
+  URL Parameters:
+  - symbol: Stock symbol (e.g., AAPL)
+  - date: Original purchase date (YYYY-MM-DD)
+  
+  Expected Response:
+  {
+    "message": "Portfolio updated successfully",
+    "stock": {
+      "user": "user_id",
+      "symbol": "AAPL",
+      "date": "2024-03-21T00:00:00.000Z",
+      "closingPrice": 176.20,
+      "currentPrice": 177.00,
+      "quantity": 15,
+      "totalValue": 2643.00,
+      "lastUpdated": "2024-03-21T12:00:00.000Z"
+    }
+  }
+} 

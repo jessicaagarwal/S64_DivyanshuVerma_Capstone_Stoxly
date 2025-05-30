@@ -1,0 +1,31 @@
+meta {
+  name: Get Latest Market Bars
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{$process.env.BASE_URL}}/api/market/latest-bars?symbols=AAPL,MSFT,GOOGL
+  auth: none
+}
+
+docs {
+  Get latest market data bars for specified symbols.
+  
+  Query Parameters:
+  - symbols: Comma-separated list of stock symbols
+  
+  Expected Response:
+  {
+    "AAPL": {
+      "c": 175.50,  // closing price
+      "h": 176.20,  // high price
+      "l": 174.80,  // low price
+      "o": 175.00,  // opening price
+      "t": "2024-03-20T16:00:00Z",  // timestamp
+      "v": 1000000  // volume
+    },
+    "MSFT": {...},
+    "GOOGL": {...}
+  }
+} 

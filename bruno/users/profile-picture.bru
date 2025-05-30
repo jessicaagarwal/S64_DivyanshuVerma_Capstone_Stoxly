@@ -1,0 +1,22 @@
+meta {
+  name: Get User Profile Picture
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{$process.env.BASE_URL}}/api/user/profile-picture?url=profile_picture_url
+  auth: none
+}
+
+docs {
+  Get a user's profile picture from Google.
+  
+  Query Parameters:
+  - url: Google profile picture URL
+  
+  Expected Response:
+  Binary image data with appropriate content type header.
+  
+  Note: This endpoint proxies the image from Google to avoid CORS issues.
+} 

@@ -1,0 +1,32 @@
+meta {
+  name: Add Stock to Portfolio
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{$process.env.BASE_URL}}/api/portfolio
+  body: json {
+    "symbol": "AAPL",
+    "date": "2024-03-20",
+    "quantity": 10
+  }
+  auth: bearer
+}
+
+docs {
+  Add a stock to the user's portfolio.
+  Requires authentication.
+  
+  Expected Response:
+  {
+    "user": "user_id",
+    "symbol": "AAPL",
+    "date": "2024-03-20T00:00:00.000Z",
+    "closingPrice": 175.50,
+    "currentPrice": 176.20,
+    "quantity": 10,
+    "totalValue": 1755.00,
+    "lastUpdated": "2024-03-20T12:00:00.000Z"
+  }
+} 
