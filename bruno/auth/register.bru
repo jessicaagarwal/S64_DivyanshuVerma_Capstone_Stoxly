@@ -1,0 +1,27 @@
+meta {
+  name: Register
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{$process.env.BASE_URL}}/api/users
+  body: json {
+    "fullName": "New User",
+    "email": "newuser@example.com",
+    "password": "your_password"
+  }
+  auth: none
+}
+
+docs {
+  Register a new user with local authentication.
+  
+  Expected Response (201 Created):
+  {
+    "_id": "user_id",
+    "fullName": "New User",
+    "email": "newuser@example.com",
+    "authMethod": "local"
+  }
+} 

@@ -1,0 +1,39 @@
+meta {
+  name: Get Market News
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{$process.env.BASE_URL}}/api/news?symbols=AAPL,MSFT,GOOGL
+  auth: none
+}
+
+docs {
+  Get news articles for specified stock symbols.
+  
+  Query Parameters:
+  - symbols: Comma-separated list of stock symbols
+  
+  Expected Response:
+  {
+    "AAPL": [
+      {
+        "id": "news_id",
+        "headline": "Article Headline",
+        "content": "Article content...",
+        "images": [
+          {
+            "size": "large",
+            "url": "image_url"
+          }
+        ],
+        "symbols": ["AAPL"],
+        "source": "News Source",
+        "published_at": "2024-03-20T12:00:00Z"
+      }
+    ],
+    "MSFT": [...],
+    "GOOGL": [...]
+  }
+} 

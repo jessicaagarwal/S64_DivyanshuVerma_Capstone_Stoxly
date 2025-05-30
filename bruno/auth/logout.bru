@@ -1,0 +1,19 @@
+meta {
+  name: Logout
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{$process.env.BASE_URL}}/api/auth/logout
+  auth: bearer
+}
+
+docs {
+  Logs out the user by clearing the JWT cookie.
+  
+  Expected Response:
+  {
+    "message": "Logged out successfully"
+  }
+} 

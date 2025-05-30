@@ -1,0 +1,25 @@
+meta {
+  name: Get Stock Price
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{$process.env.BASE_URL}}/api/stock/price?symbol=AAPL&date=2024-03-20
+  auth: none
+}
+
+docs {
+  Get the closing price for a stock on a specific date.
+  
+  Query Parameters:
+  - symbol: Stock symbol (e.g., AAPL)
+  - date: Date in YYYY-MM-DD format
+  
+  Expected Response:
+  {
+    "symbol": "AAPL",
+    "date": "2024-03-20",
+    "closingPrice": 175.50
+  }
+} 

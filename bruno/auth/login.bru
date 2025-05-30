@@ -1,0 +1,29 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{$process.env.BASE_URL}}/api/users/login
+  body: json {
+    "email": "user@example.com",
+    "password": "your_password"
+  }
+  auth: none
+}
+
+docs {
+  Login endpoint for user authentication.
+  Returns JWT token in cookies and response body.
+  
+  Expected Response:
+  {
+    "user": {
+      "_id": "user_id",
+      "fullName": "User Name",
+      "email": "user@example.com"
+    },
+    "token": "jwt_token"
+  }
+} 
