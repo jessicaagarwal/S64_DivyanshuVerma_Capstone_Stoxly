@@ -12,6 +12,8 @@ import Donut3DThree from '../components/ui/Donut3DThree';
 import MarketCalendar from '../components/ui/MarketCalendar';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,7 +69,7 @@ const Dashboard = () => {
       try {
         setMoversLoading(true);
         setMoversError('');
-        const response = await axios.get('http://localhost:5000/api/market/market-movers');
+        const response = await axios.get(`${API_BASE_URL}/api/market/market-movers`);
         console.log('Market movers response:', response.data); // Debug log
         setMarketMovers(response.data);
       } catch (error) {
@@ -92,7 +94,7 @@ const Dashboard = () => {
       try {
         // 1. Fetch holdings and user profile picture
         console.log('Fetching holdings and user profile...');
-        const res = await axios.get('http://localhost:5000/api/portfolio', { withCredentials: true });
+        const res = await axios.get(`${API_BASE_URL}/api/portfolio`, { withCredentials: true });
         const { portfolio: data, user } = res.data;
 
         console.log('Portfolio API response data:', res.data);
@@ -101,7 +103,7 @@ const Dashboard = () => {
         if (user?.profilePicture) {
           console.log('User profile picture found:', user.profilePicture);
           // Use the backend proxy endpoint to fetch the image
-          setUserProfilePicture(`http://localhost:5000/api/user/profile-picture?url=${encodeURIComponent(user.profilePicture)}`);
+          setUserProfilePicture(`${API_BASE_URL}/api/user/profile-picture?url=${encodeURIComponent(user.profilePicture)}`);
         }
 
         // 2. Get unique symbols
@@ -110,7 +112,7 @@ const Dashboard = () => {
         let symbolToName = {};
         if (symbols.length > 0) {
           // 3. Fetch asset names
-          const namesRes = await axios.get(`http://localhost:5000/api/asset-names?symbols=${symbols.join(',')}`);
+          const namesRes = await axios.get(`${API_BASE_URL}/api/asset-names?symbols=${symbols.join(',')}`);
           symbolToName = namesRes.data;
         }
 
@@ -146,7 +148,7 @@ const Dashboard = () => {
   // Add this function after the refreshHoldings function
   const fetchLatestBars = async (symbols) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/market/latest-bars?symbols=${symbols.join(',')}`);
+      const response = await axios.get(`${API_BASE_URL}/api/market/latest-bars?symbols=${symbols.join(',')}`);
       const latestBars = response.data;
       console.log('API response:', latestBars);
       setHoldings(prev => prev.map(h => {
@@ -170,7 +172,7 @@ const Dashboard = () => {
     const symbols = [...new Set(holdings.map(h => h.symbol))];
     
     // Open WebSocket connection
-    wsRef.current = new window.WebSocket('ws://localhost:5000');
+    wsRef.current = new window.WebSocket(`${API_BASE_URL}`);
     
     wsRef.current.onopen = () => {
       wsRef.current.send(JSON.stringify({ action: 'subscribe', symbols }));
@@ -236,7 +238,7 @@ const Dashboard = () => {
     setHoldingsLoading(true);
     setHoldingsError('');
     try {
-      const res = await fetch('http://localhost:5000/api/portfolio', {
+      const res = await fetch(`${API_BASE_URL}/api/portfolio`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -274,7 +276,7 @@ const Dashboard = () => {
     setAddError('');
     setAddSuccess('');
     try {
-      const res = await fetch('http://localhost:5000/api/portfolio', {
+      const res = await fetch(`${API_BASE_URL}/api/portfolio`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -291,7 +293,7 @@ const Dashboard = () => {
       let newHolding = await res.json();
       // Fetch the latest bar for the symbol to ensure currentPrice is up to date
       try {
-        const barsRes = await fetch(`http://localhost:5000/api/market/latest-bars?symbols=${newHolding.symbol}`);
+        const barsRes = await fetch(`${API_BASE_URL}/api/market/latest-bars?symbols=${newHolding.symbol}`);
         if (barsRes.ok) {
           const barsData = await barsRes.json();
           if (barsData && barsData[newHolding.symbol] && barsData[newHolding.symbol].c) {
@@ -334,7 +336,7 @@ const Dashboard = () => {
     setEditLoading(true);
     setEditError('');
     try {
-      const res = await fetch(`http://localhost:5000/api/portfolio/${editModal.originalSymbol}/${editModal.originalDate}`, {
+      const res = await fetch(`${API_BASE_URL}/api/portfolio/${editModal.originalSymbol}/${editModal.originalDate}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -367,7 +369,7 @@ const Dashboard = () => {
     try {
       const symbol = deleteModal.stock.symbol;
       const date = deleteModal.stock.date;
-      const res = await fetch(`http://localhost:5000/api/portfolio/${symbol}?date=${date}`, {
+      const res = await fetch(`${API_BASE_URL}/api/portfolio/${symbol}?date=${date}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -464,7 +466,7 @@ const Dashboard = () => {
       try {
         console.log('Fetching yesterday closes...');
         const symbols = holdings.map(h => h.symbol).join(',');
-        const res = await axios.get(`http://localhost:5000/api/market/yesterday-close?symbols=${symbols}`);
+        const res = await axios.get(`${API_BASE_URL}/api/market/yesterday-close?symbols=${symbols}`);
         const data = res.data;
         console.log('Yesterday closes response:', data);
         setYesterdayCloses(data);
@@ -556,7 +558,7 @@ const Dashboard = () => {
   // Function to handle logout
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:5000/api/auth/logout', {}, { withCredentials: true });
+      await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
       // Redirect to landing page after successful logout
       navigate('/');
     } catch (error) {
