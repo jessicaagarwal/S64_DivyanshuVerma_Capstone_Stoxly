@@ -4,6 +4,8 @@ import './SignupPage.css';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import IconStrip from '../components/IconStrip';
 
+const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_URL;
+
 const SignupPage = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -62,7 +64,7 @@ const SignupPage = () => {
       setApiError('');
       
       try {
-        const response = await fetch('http://localhost:5000/api/users', {
+        const response = await fetch(`${API_BASE_URL}/api/users`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './MarketCalendar.css';
 
+const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_URL;
+
 const MarketCalendar = () => {
   const [marketStatus, setMarketStatus] = useState('Loading...');
   const [error, setError] = useState('');
@@ -28,7 +30,7 @@ const MarketCalendar = () => {
       const day = etTime.getDate().toString().padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
 
-      const response = await axios.get('http://localhost:5000/api/market/calendar', {
+      const response = await axios.get(`${API_BASE_URL}/api/market/calendar`, {
         params: { start: formattedDate, end: formattedDate }
       });
 

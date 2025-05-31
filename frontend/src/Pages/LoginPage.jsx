@@ -4,6 +4,8 @@ import './LoginPage.css';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaGoogle } from 'react-icons/fa';
 import IconStrip from '../components/IconStrip';
 
+const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_URL;
+
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -49,7 +51,7 @@ const LoginPage = () => {
       setApiError('');
       
       try {
-        const response = await fetch('http://localhost:5000/api/users/login', {
+        const response = await fetch(`${API_BASE_URL}/api/users/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -81,7 +83,7 @@ const LoginPage = () => {
   };
 
   const handleGoogleSignIn = () => {
-    window.location.href = 'http://localhost:5000/auth/google';
+    window.location.href = `${API_BASE_URL}/auth/google`;
   };   
   
   return (

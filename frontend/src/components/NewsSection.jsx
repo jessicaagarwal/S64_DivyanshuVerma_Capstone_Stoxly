@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './NewsSection.css';
 
+const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_URL;
+
 const NewsSection = () => {
   const [news, setNews] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -13,7 +15,7 @@ const NewsSection = () => {
       setError('');
       try {
         // 1. Fetch user's holdings
-        const holdingsRes = await axios.get('http://localhost:5000/api/portfolio', { withCredentials: true });
+        const holdingsRes = await axios.get(`${API_BASE_URL}/api/portfolio`, { withCredentials: true });
         const holdings = holdingsRes.data;
         const symbols = [...new Set(holdings.map(h => h.symbol).filter(Boolean))];
         console.log(symbols);
@@ -23,7 +25,7 @@ const NewsSection = () => {
           return;
         }
         // 2. Fetch news for those symbols
-        const newsRes = await axios.get(`http://localhost:5000/api/news?symbols=${symbols.join(',')}`);
+        const newsRes = await axios.get(`${API_BASE_URL}/api/news?symbols=${symbols.join(',')}`);
         setNews(newsRes.data);
       } catch (err) {
         setError('Failed to fetch news.');
