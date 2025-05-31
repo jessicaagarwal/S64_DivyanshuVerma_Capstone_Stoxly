@@ -12,7 +12,7 @@ import Donut3DThree from '../components/ui/Donut3DThree';
 import MarketCalendar from '../components/ui/MarketCalendar';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
