@@ -167,14 +167,23 @@ function authenticateJWT(req, res, next) {
     token = authHeader.split(' ')[1];
   } else if (req.cookies && req.cookies.token) {
     token = req.cookies.token;
+    console.log('Token found in cookie:', token ? 'Yes' : 'No');
   }
+  
+  console.log('Attempting JWT verification...');
+
   if (token) {
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) return res.sendStatus(403);
+      if (err) {
+        console.error('JWT verification failed:', err.message);
+        return res.sendStatus(403);
+      }
+      console.log('JWT verification successful. User:', user);
       req.user = user;
       next();
     });
   } else {
+    console.log('No token found, sending 401');
     res.sendStatus(401);
   }
 }
