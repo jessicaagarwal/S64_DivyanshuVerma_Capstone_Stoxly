@@ -430,7 +430,7 @@ app.get('/auth/google/callback',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
     // Redirect to frontend without token in URL
-    res.redirect('http://localhost:5173/dashboard');
+    res.redirect('https://stoxly.netlify.app/dashboard');
   }
 );
 
