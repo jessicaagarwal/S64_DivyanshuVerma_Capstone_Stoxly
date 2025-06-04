@@ -225,7 +225,7 @@ app.post('/api/users/login', async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // true in production
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -435,7 +435,7 @@ app.get('/auth/google/callback',
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // true in production
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
     // Redirect to frontend without token in URL
