@@ -1,6 +1,7 @@
 import React from "react";
 import { CardBody, CardContainer, CardItem } from "./3d-card";
 import "./LosersCard.css";
+import Loader from "../loader";
 
 export default function LosersCard({ losers, loading, error }) {
   return (
@@ -18,7 +19,7 @@ export default function LosersCard({ losers, loading, error }) {
         
         {loading ? (
           <CardItem translateZ="60" className="losers-card-loading">
-            Loading...
+            <Loader />
           </CardItem>
         ) : error ? (
           <CardItem translateZ="60" className="losers-card-error">
