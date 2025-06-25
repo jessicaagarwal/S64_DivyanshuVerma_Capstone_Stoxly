@@ -1,39 +1,93 @@
-# Stock Market Portfolio Tracker
+# 📈 Stoxly (Stock Market Portfolio Tracker)
 
-[![React](https://img.shields.io/badge/Frontend-React-blue?logo=react)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Backend-Node.js-green?logo=node.js)](https://nodejs.org/) [![Express](https://img.shields.io/badge/API-Express-black?logo=express)](https://expressjs.com/) [![MongoDB](https://img.shields.io/badge/Database-MongoDB-brightgreen?logo=mongodb)](https://www.mongodb.com/) [![JWT](https://img.shields.io/badge/Auth-JWT-orange?logo=jsonwebtokens)](https://jwt.io/) [![Alpaca](https://img.shields.io/badge/Stock%20Data-Alpaca-0055FF?logo=alpaca)](https://alpaca.markets/) [![Three.js](https://img.shields.io/badge/3D-Three.js-000?logo=three.js)](https://threejs.org/)
+[![React](https://img.shields.io/badge/Frontend-React-blue?logo=react)](https://react.dev/) 
+[![Node.js](https://img.shields.io/badge/Backend-Node.js-green?logo=node.js)](https://nodejs.org/) 
+[![Express](https://img.shields.io/badge/API-Express-black?logo=express)](https://expressjs.com/) 
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB-brightgreen?logo=mongodb)](https://www.mongodb.com/) 
+[![JWT](https://img.shields.io/badge/Auth-JWT-orange?logo=jsonwebtokens)](https://jwt.io/) 
+[![Alpaca](https://img.shields.io/badge/Stock%20Data-Alpaca-0055FF?logo=alpaca)](https://alpaca.markets/) 
+[![Three.js](https://img.shields.io/badge/3D-Three.js-000?logo=three.js)](https://threejs.org/)
 
-## Overview
+---
 
-**Stock Market Portfolio Tracker** is a modern web application that empowers users to efficiently manage and analyze their stock investments. With real-time market data, interactive dashboards, and advanced visualization, it provides a seamless experience for both casual investors and active traders.
+## 🌐 Deployment
 
-## Features
-- **User Authentication:** Secure login and registration with JWT.
-- **Portfolio Management:** Add, edit, and delete stocks in your portfolio.
-- **Real-Time Data:** Live stock prices and market updates via WebSocket and Alpaca API.
-- **Performance Analytics:** Visualize profits, losses, and historical trends.
-- **3D Interactive UI:** Engaging landing page and charts powered by Three.js.
-- **News & Insights:** Stay updated with the latest market news and movers.
+- 🔗 [Live Site (Frontend)](https://stoxly.netlify.app)
 
-## Tech Stack
-- **Frontend:** React.js
-- **Backend:** Node.js, Express.js
-- **Database:** MongoDB Atlas
-- **Authentication:** JWT
-- **Stock Data:** Alpaca API, WebSocket
-- **3D Visualization:** Three.js
+---
+
+## 🎥 Demo
+
+<video width="100%" autoplay loop muted playsinline>
+  <source src="./assets/Demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+---
+
+## 📸 Screenshots
+
+### 📊 Portfolio Dashboard
+<img src="./assets/portfolio.png" alt="Dashboard Screenshot" width="100%" />
+
+### 🎮 3D Landing Page
+<img src="./assets/landingPage.PNG" alt="3D Screenshot" width="100%" />
+
+---
+
+## 📝 Overview
+
+Tracking stock investments manually can be challenging, leading to difficulties in monitoring profits/losses, retrieving historical data, and visualizing market trends?
+
+**Stoxly** is a modern full-stack web application designed to help users manage and analyze their stock investments with ease. By integrating real-time stock data, interactive dashboards, and 3D visuals, it delivers a robust experience for both beginners and experienced traders.
+
+---
+
+## ✨ Features
+
+- 🔐 **Secure Authentication** – User login and registration powered by JWT.
+- 📊 **Portfolio Dashboard** – Add, update, and remove stocks in a personal portfolio.
+- 📈 **Live Market Data** – Real-time stock prices and updates via Alpaca API and WebSocket.
+- 📉 **Analytics & Insights** – Visualize profits, losses, and historical trends.
+- 🌐 **3D Interactive UI** – Engaging, animated elements and charts powered by Three.js.
+- 📰 **Market News** – Stay updated with top headlines and movers in the stock market.
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- [React.js](https://react.dev/)
+- CSS 
+
+### Backend
+- [Node.js](https://nodejs.org/)
+- [Express.js](https://expressjs.com/)
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+- JWT Authentication
+- WebSocket for real-time data
+
+### APIs & Services
+- [Alpaca API](https://alpaca.markets/) – Real-time stock data
+- [TradingView](https://www.tradingview.com/) – Optional charting integration
+
+### Visualization
+- [Three.js](https://threejs.org/) – 3D interactive visuals
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js & npm
 - MongoDB Atlas account
-- Alpaca API key
+- Alpaca API key (go [here](https://alpaca.markets/) for keys)
 
 ### Installation
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/stock-portfolio-tracker.git
-   cd stock-portfolio-tracker
+   git clone https://github.com/kalviumcommunity/S64_DivyanshuVerma_Capstone_Stoxly.git
+   cd S64_DivyanshuVerma_Capstone_Stoxly
    ```
 2. **Install dependencies:**
    ```bash
@@ -41,11 +95,11 @@
    cd ../frontend && npm install
    ```
 3. **Set up environment variables:**
-   - Create `.env` files in both `backend` and `frontend` directories (see `.env.example` if available).
+   - Create `.env` files in `backend` directory (see `.env.example`).
 4. **Run the application:**
    - Start backend:
      ```bash
-     cd backend && npm start
+     cd backend && npm run dev
      ```
    - Start frontend:
      ```bash
