@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './MarketCalendar.css';
 
-const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
 const MarketCalendar = () => {
   const [marketStatus, setMarketStatus] = useState('Loading...');

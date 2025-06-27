@@ -4,7 +4,7 @@ import './SignupPage.css';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import IconStrip from '../components/IconStrip';
 
-const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({

@@ -699,6 +699,10 @@ app.get('/api/user/profile-picture', async (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
+});
+
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 
